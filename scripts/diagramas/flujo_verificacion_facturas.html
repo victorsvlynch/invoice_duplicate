@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flujo de Verificación de Facturas Duplicadas - Diagrama de Secuencia</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --primary: #38bdf8;
+    }
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #0284c7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1.25rem 2rem;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h1 {
+      font-size: 1.2rem;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .btn {
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      cursor: pointer;
+    }
+    main {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .mermaid-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 1200px;
+      width: 100%;
+      overflow-x: auto;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Flujo de Secuencia: Verificación de Facturas Duplicadas</h1>
+      <p>Interacción completa entre el Operador, la UI de Streamlit, el Motor Matcher O(1) y la Columna P de Excel</p>
+    </div>
+    <button class="btn" onclick="toggleTheme()">🌓 Alternar Tema</button>
+  </header>
+
+  <main>
+    <div class="mermaid-box">
+      <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor User as Operador Logístico
+    participant UI as Streamlit UI (app.py :8504)
+    participant Loader as Excel Loader (excel_loader.py)
+    participant Disk as Almacenamiento Local (data/)
+    participant SP as SharePoint M365 Cloud
+    participant Matcher as Matcher O(1) (matcher.py)
+    participant Report as Report Generator (report_generator.py)
+
+    Note over User,SP: 1. Carga de Archivo Excel y Detección de Columna P
+    alt Carga Local / Mapeada
+        UI->>Loader: Cargar "Requ & OC.xlsx"
+        Loader->>Disk: Leer archivo desde /data
+    else Descarga SharePoint M365
+        UI->>Loader: Descargar desde enlace SharePoint
+        Loader->>SP: Petición HTTPS / Sesión M365
+        SP-->>Loader: Archivo binario .xlsx
+        Loader->>Disk: Guardar en caché /data
+    end
+    Loader-->>UI: DataFrame cargado + Detección automática Columna P (índice 15)
+
+    Note over User,Report: 2. Ingreso de Comprobantes y Verificación Multicriterio
+    User->>UI: Pega lista manual de comprobantes (ej. F85S-0000064535, 0000064535, 64535)
+    User->>UI: Clic en "Verificar Duplicados en Excel"
+    UI->>Matcher: Enviar texto de consulta + DataFrame
+    Matcher->>Matcher: Indexación O(1) con diccionarios Hash
+    loop Por cada comprobante ingresado
+        Matcher->>Matcher: 1. Coincidencia Exacta (Serie + Número)
+        Matcher->>Matcher: 2. Correlativo con ceros (ej. 0000064535)
+        Matcher->>Matcher: 3. Número sin ceros (ej. 64535)
+        Matcher->>Matcher: 4. Alerta si coincide número pero con Serie distinta
+        Matcher->>Matcher: 5. Detección de duplicado interno en la lista pegada
+    end
+    Matcher-->>UI: Retorna Resumen, Detalles de filas Excel y Estadísticas
+
+    Note over User,Report: 3. Exploración de Resultados y Descarga de Reportes
+    UI-->>User: Muestra métricas (Total, Duplicados, No Encontrados) y Pestañas interactivas
+    User->>UI: Solicita Descargar Reporte (.xlsx / .csv)
+    UI->>Report: Compilar libro Excel estilizado (openpyxl)
+    Report-->>UI: Bytes del archivo .xlsx con hojas (Resumen, Detalles, No Encontrados)
+    UI-->>User: Entrega descarga de "Reporte_Duplicados_YYYYMMDD_HHMMSS.xlsx"
+      </div>
+    </div>
+  </main>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      securityLevel: 'loose'
+    });
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      location.reload();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+# ==============================================================================
+# .gitignore - Invoice Duplicate Verifier (Streamlit + Docker + Python / DAG)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Entornos Virtuales de Python y Gestores
+# ------------------------------------------------------------------------------
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ------------------------------------------------------------------------------
+# 2. Caché de Python y Compilación Bytecode
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ------------------------------------------------------------------------------
+# 3. Streamlit & Archivos Temporales de Servidor
+# ------------------------------------------------------------------------------
+.streamlit/secrets.toml
+*.log
+
+# ------------------------------------------------------------------------------
+# 4. Archivos de Configuración Local y Credenciales Sensibles
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+!.env.template
+secrets.json
+credentials.json
+api_keys.txt
+*api_key*.txt
+*.pem
+*.key
+*.cert
+*.p12
+
+# ------------------------------------------------------------------------------
+# 5. Comprobantes Descargados y Reportes Temporales
+# ------------------------------------------------------------------------------
+temp/
+tmp/
+*.tmp
+*.temp
+Reporte_Duplicados_*.xlsx
+Resumen_Duplicados_*.csv
+
+# ------------------------------------------------------------------------------
+# 6. Carpetas de Respaldos (Archify)
+# ------------------------------------------------------------------------------
+archives/*.zip
+!archives/.gitkeep
+
+# ------------------------------------------------------------------------------
+# 7. IDEs y Editores de Código
+# ------------------------------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+
+# ------------------------------------------------------------------------------
+# 8. Archivos del Sistema Operativo
+# ------------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+$RECYCLE.BIN/
+desktop.ini
+*~
+*.swp

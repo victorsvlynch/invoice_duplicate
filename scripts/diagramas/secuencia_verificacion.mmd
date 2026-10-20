@@ -1,0 +1,42 @@
+sequenceDiagram
+    autonumber
+    actor User as Operador Logístico
+    participant UI as Streamlit UI (app.py)
+    participant Loader as Excel Loader (excel_loader.py)
+    participant Disk as Almacenamiento Local (data/)
+    participant SP as SharePoint M365 Cloud
+    participant Matcher as Matcher O(1) (matcher.py)
+    participant Report as Report Generator (report_generator.py)
+
+    Note over User,SP: 1. Carga de Archivo Excel y Detección de Columna P
+    alt Carga Local / Mapeada
+        UI->>Loader: Cargar "Requ & OC.xlsx"
+        Loader->>Disk: Leer archivo desde /data
+    else Descarga SharePoint M365
+        UI->>Loader: Descargar desde enlace SharePoint
+        Loader->>SP: Petición HTTPS / Sesión M365
+        SP-->>Loader: Archivo binario .xlsx
+        Loader->>Disk: Guardar en caché /data
+    end
+    Loader-->>UI: DataFrame cargado + Detección automática Columna P (índice 15)
+
+    Note over User,Report: 2. Ingreso de Comprobantes y Verificación Multicriterio
+    User->>UI: Pega lista manual de comprobantes (ej. F85S-0000064535, 0000064535, 64535)
+    User->>UI: Clic en "Verificar Duplicados en Excel"
+    UI->>Matcher: Enviar texto de consulta + DataFrame
+    Matcher->>Matcher: Indexación O(1) con diccionarios Hash
+    loop Por cada comprobante ingresado
+        Matcher->>Matcher: 1. Coincidencia Exacta (Serie + Número)
+        Matcher->>Matcher: 2. Correlativo con ceros (ej. 0000064535)
+        Matcher->>Matcher: 3. Número sin ceros (ej. 64535)
+        Matcher->>Matcher: 4. Alerta si coincide número pero con Serie distinta
+        Matcher->>Matcher: 5. Detección de duplicado interno en la lista pegada
+    end
+    Matcher-->>UI: Retorna Resumen, Detalles de filas Excel y Estadísticas
+
+    Note over User,Report: 3. Exploración de Resultados y Descarga de Reportes
+    UI-->>User: Muestra métricas (Total, Duplicados, No Encontrados) y Pestañas interactivas
+    User->>UI: Solicita Descargar Reporte (.xlsx / .csv)
+    UI->>Report: Compilar libro Excel estilizado (openpyxl)
+    Report-->>UI: Bytes del archivo .xlsx con hojas (Resumen, Detalles, No Encontrados)
+    UI-->>User: Entrega descarga de "Reporte_Duplicados_YYYYMMDD_HHMMSS.xlsx"

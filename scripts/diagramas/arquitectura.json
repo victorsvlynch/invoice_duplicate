@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Arquitectura de Ejecucion - Sistema de Verificacion de Facturas Duplicadas",
+    "output": "arquitectura.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "client_web_ui", "type": "frontend", "label": "Operador Logistico", "sublabel": "Navegador Web (UI)", "pos": [50, 240], "size": [130, 60] },
+    { "id": "docker_host", "type": "cloud", "label": "Docker Host", "sublabel": "Port Gateway :8504", "pos": [260, 240], "size": [130, 60] },
+    { "id": "streamlit_app", "type": "frontend", "label": "Streamlit App", "sublabel": "app.py (Puerto 8504)", "pos": [510, 240], "size": [140, 60] },
+    { "id": "matcher_engine", "type": "backend", "label": "Matcher Engine", "sublabel": "O(1) Hash Index (matcher.py)", "pos": [770, 130], "size": [160, 60], "tag": "Core Logic" },
+    { "id": "excel_loader", "type": "backend", "label": "Excel Loader", "sublabel": "Columna P Reader (excel_loader.py)", "pos": [770, 240], "size": [160, 60] },
+    { "id": "report_generator", "type": "backend", "label": "Report Generator", "sublabel": "XLSX / CSV (report_generator.py)", "pos": [770, 350], "size": [160, 60] },
+    { "id": "local_storage", "type": "database", "label": "Volumen Local", "sublabel": "/app/data (Requ & OC.xlsx)", "pos": [1050, 240], "size": [150, 60] },
+    { "id": "sharepoint_cloud", "type": "cloud", "label": "SharePoint M365", "sublabel": "Requ & OC.xlsx Cloud", "pos": [1050, 370], "size": [150, 60] },
+    { "id": "auto_push_tool", "type": "backend", "label": "DevOps auto_push", "sublabel": "scripts/auto_push.ps1", "pos": [260, 90], "size": [130, 60] },
+    { "id": "github_actions", "type": "cloud", "label": "GitHub Actions", "sublabel": "SemVer Release CI/CD", "pos": [510, 90], "size": [140, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Zona Publica de Cliente (Untrusted Zone)", "wraps": ["client_web_ui"] },
+    { "kind": "security-group", "label": "DMZ / Application Container Zone (Docker :8504)", "wraps": ["docker_host", "streamlit_app", "matcher_engine", "excel_loader", "report_generator", "local_storage"] },
+    { "kind": "region", "label": "Zona Externa & Cloud (SharePoint / GitHub)", "wraps": ["sharepoint_cloud", "auto_push_tool", "github_actions"] }
+  ],
+  "connections": [
+    { "id": "user-to-host", "from": "client_web_ui", "to": "docker_host", "label": "HTTP :8504", "variant": "emphasis" },
+    { "id": "host-to-ui", "from": "docker_host", "to": "streamlit_app", "label": "Proxy / Port Map", "variant": "emphasis" },
+    { "id": "ui-to-matcher", "from": "streamlit_app", "to": "matcher_engine", "label": "Valida Facturas", "variant": "emphasis", "fromSide": "top", "toSide": "left" },
+    { "id": "ui-to-loader", "from": "streamlit_app", "to": "excel_loader", "label": "Lee Columna P", "variant": "emphasis" },
+    { "id": "ui-to-report", "from": "streamlit_app", "to": "report_generator", "label": "Genera XLSX / CSV", "fromSide": "bottom", "toSide": "left" },
+    { "id": "loader-to-storage", "from": "excel_loader", "to": "local_storage", "label": "Caché Persistente", "variant": "emphasis" },
+    { "id": "loader-to-sp", "from": "excel_loader", "to": "sharepoint_cloud", "label": "Descarga / Sync", "fromSide": "bottom", "toSide": "top" },
+    { "id": "user-to-push", "from": "client_web_ui", "to": "auto_push_tool", "label": "git push (CLI)", "fromSide": "top", "toSide": "left" },
+    { "id": "push-to-ci", "from": "auto_push_tool", "to": "github_actions", "label": "Conventional Commits", "variant": "emphasis" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Frontend & Interfaz (Streamlit :8504)",
+      "items": [
+        "Interfaz corporativa sin branding de Streamlit ni botones invasivos de Deploy.",
+        "Entrada multi-línea con selector de modos y botón de carga de 23 comprobantes de muestra.",
+        "Métricas en tiempo real, pestañas de Resumen, Detalle y Facturas Nuevas."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Motor Matcher O(1) & Excel Loader",
+      "items": [
+        "Parsing inteligente de series SUNAT (F85S, FP02, F001) y correlativos numéricos.",
+        "Coincidencia exacta, correlativo con ceros (0000064535) y número sin ceros (64535).",
+        "Alerta automática de serie cruzada para evitar errores de digitación.",
+        "Detección y mapeo automático de la Columna P (índice 15) en Requ & OC.xlsx."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Persistencia, DevOps & CI/CD",
+      "items": [
+        "Volumen montado ./data:/app/data para sincronización continua del archivo Excel.",
+        "Script auto_push.ps1 con generación asistida por IA (Gemini) de mensajes de commit.",
+        "Pipeline de GitHub Actions (release.yml) para publicación de versiones SemVer automáticas."
+      ]
+    }
+  ]
+}
